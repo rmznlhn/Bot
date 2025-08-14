@@ -55,7 +55,9 @@ async def mesaj(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if text.lower().startswith("/ekle"):
         try:
-            _, urun_ad, urun_url = text.split(maxsplit=2)
+            parts = text.split()
+            urun_ad = parts[1]
+            urun_url = " ".join(parts[2:])
             urunler[urun_ad] = {"url": urun_url, "fiyat": None}
             urunler_kaydet(urunler)
             await update.message.reply_text(f"{urun_ad} başarıyla eklendi!")
