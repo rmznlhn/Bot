@@ -1,14 +1,17 @@
-from telegram.ext import Application, CommandHandler
-import asyncio
+import os
+from telegram import Update
+from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
-TOKEN = "8350284060:AAELTkDNIEt_oWP-ZXYDRlo_eBSofz2cziA"
+# Token'i Railway Environment Variables'dan al
+TOKEN = os.environ.get("BOT_TOKEN")
 
-async def start(update, context):
-    await update.message.reply_text("Merhaba! Bot çalışıyor 🚀")
+# /start komutu
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("Merhaba! Bot çalışıyor ✅")
 
-async def main():
-    app = Application.builder().token(TOKEN).build()
+# Botu çalıştır
+if __name__ == "__main__":
+    app = ApplicationBuilder().token(TOKEN).build()
     app.add_handler(CommandHandler("start", start))
-    await app.run_polling()
-
-asyncio.run(main())
+    print("Bot başladı...")
+    app.run_polling()
