@@ -55,14 +55,17 @@ async def mesaj(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if text.lower().startswith("/ekle"):
         try:
-            parts = text.split()
+            parts = text.split(maxsplit=2)
+            if len(parts) < 3:
+                await update.message.reply_text("Hatalı kullanım. Örnek: /ekle ÜrünAdı URL")
+                return
             urun_ad = parts[1]
-            urun_url = " ".join(parts[2:])
+            urun_url = parts[2]
             urunler[urun_ad] = {"url": urun_url, "fiyat": None}
             urunler_kaydet(urunler)
             await update.message.reply_text(f"{urun_ad} başarıyla eklendi!")
-        except:
-            await update.message.reply_text("Hatalı kullanım. Örnek: /ekle ÜrünAdı URL")
+        except Exception as e:
+            await update.message.reply_text("Hata oluştu, tekrar deneyin.")
         return
 
     # Normal mesajlar
