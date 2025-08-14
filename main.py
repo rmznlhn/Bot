@@ -21,14 +21,18 @@ def urunler_kaydet(urunler):
     with open("urunler.json", "w") as f:
         json.dump(urunler, f)
 
-# Fiyat çekme fonksiyonu
+# Fiyat çekme fonksiyonu (Hepsiburada için güncel)
 def urun_fiyati_al(url):
     try:
-        r = requests.get(url, headers={"User-Agent":"Mozilla/5.0"})
-        soup = BeautifulSoup(r.text, "html.parser")
-        fiyat_tag = soup.find("span", class_="price-value")  # Hepsiburada örnek
+        headers = {"User-Agent": "Mozilla/5.0"}
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()
+        soup = BeautifulSoup(response.text, "html.parser")
+
+        # Hepsiburada fiyat class'ı "value"
+        fiyat_tag = soup.find("span", class_="value")
         if fiyat_tag:
-            fiyat = fiyat_tag.text.replace(".", "").replace(",", ".").strip()
+            fiyat = fiyat_tag.text.strip().replace(" TL", "").replace(",", ".")
             return float(fiyat)
         return None
     except:
