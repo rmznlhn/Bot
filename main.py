@@ -94,15 +94,9 @@ async def otomatik_kontrol(app):
 if __name__ == "__main__":
     app = ApplicationBuilder().token(TOKEN).build()
 
+    # Handler eklemeleri
     app.add_handler(CommandHandler("start", start))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, mesaj))
-    app.add_handler(CallbackQueryHandler(button))
-
-    # Fiyat takibi başlat
-    app.job_queue.run_once(lambda ctx: asyncio.create_task(otomatik_kontrol(app)), when=0)
-
-    print("Bot çalışıyor...")
-    app.run_polling()    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, mesaj))
     app.add_handler(CallbackQueryHandler(button))
 
     # Fiyat takibi başlat
