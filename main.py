@@ -7,9 +7,9 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, CallbackQueryHandler, MessageHandler, filters
 
 TOKEN = os.environ.get("BOT_TOKEN")
-CHAT_ID = os.environ.get("CHAT_ID")  # Kendi Telegram chat id
+CHAT_ID = os.environ.get("CHAT_ID")  # Telegram chat ID
 
-# Ürünleri JSON dosyasından yükle
+# Ürünleri JSON dosyasından yükle/kaydet
 def urunler_yukle():
     try:
         with open("urunler.json", "r") as f:
@@ -21,7 +21,7 @@ def urunler_kaydet(urunler):
     with open("urunler.json", "w") as f:
         json.dump(urunler, f)
 
-# Basit fiyat çekme fonksiyonu
+# Fiyat çekme fonksiyonu
 def urun_fiyati_al(url):
     try:
         r = requests.get(url, headers={"User-Agent":"Mozilla/5.0"})
@@ -47,19 +47,33 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if query.data == 'bilgi':
         await query.edit_message_text("Inline buton çalışıyor!")
 
-# Kullanıcı mesajlarına cevap
+# Kullanıcı mesajlarına cevap ve ürün ekleme
 async def mesaj(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    text = update.message.text.lower()
+    text = update.message.text
     urunler = urunler_yukle()
-    if "merhaba" in text:
+
+    # /ekle komutu
+    if text.lower().startswith("/ekle"):
+        try:
+            _, urun_ad, urun_url = text.split(maxsplit=2)
+            urunler[urun_ad] = {"url": urun_url, "fiyat": None}
+            urunler_kaydet(urunler)
+            await update.message.reply_text(f"{urun_ad} başarıyla eklendi!")
+        except:
+            await update.message.reply_text("Hatalı kullanım. Örnek: /ekle ÜrünAdı URL")
+        return
+
+    # Normal mesaj cevapları
+    text_lower = text.lower()
+    if "merhaba" in text_lower:
         await update.message.reply_text("Merhaba! Nasılsın?")
-    elif "fiyat" in text:
-        mesaj = ""
+    elif "fiyat" in text_lower:
+        mesaj_text = ""
         for ad, veriler in urunler.items():
             fiyat = urun_fiyati_al(veriler["url"])
             if fiyat:
-                mesaj += f"{ad}: {fiyat} TL\n"
-        await update.message.reply_text(mesaj if mesaj else "Fiyat alınamadı.")
+                mesaj_text += f"{ad}: {fiyat} TL\n"
+        await update.message.reply_text(mesaj_text if mesaj_text else "Fiyat alınamadı.")
 
 # Otomatik fiyat kontrolü
 async def otomatik_kontrol(app):
@@ -76,11 +90,19 @@ async def otomatik_kontrol(app):
         urunler_kaydet(urunler)
         await asyncio.sleep(60)  # 1 dakika aralık
 
+# Bot başlat
 if __name__ == "__main__":
     app = ApplicationBuilder().token(TOKEN).build()
 
     app.add_handler(CommandHandler("start", start))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, mesaj))
+    app.add_handler(CallbackQueryHandler(button))
+
+    # Fiyat takibi başlat
+    app.job_queue.run_once(lambda ctx: asyncio.create_task(otomatik_kontrol(app)), when=0)
+
+    print("Bot çalışıyor...")
+    app.run_polling()    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, mesaj))
     app.add_handler(CallbackQueryHandler(button))
 
     # Fiyat takibi başlat
